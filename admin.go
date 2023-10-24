@@ -260,6 +260,7 @@ func (m *Map) setTitle(rw http.ResponseWriter, req *http.Request) {
 	http.Redirect(rw, req, "/admin/", 302)
 }
 
+// lj
 type zoomproc struct {
 	c Coord
 	m int
