@@ -230,18 +230,18 @@ func (m *Map) setDefaultHide(rw http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			return err
 		}
+		// checks for "config" bucket and create if it not exists
 		if req.FormValue("defaultHide") != "" {
 			return b.Put([]byte("defaultHide"), []byte(req.FormValue("defaultHide")))
+			// if defaultHide is not empty, then calls b.put() to add value of defaultHide to database to defaultHide key
 		} else {
 			return b.Delete([]byte("defaultHide"))
+			// if defaultHide is empty, calls b.delete() > deleted defaultHide value from database
 		}
+		// error if db communication error
 	})
 	http.Redirect(rw, req, "/admin/", 302)
-	/*
-			Внутри транзакции происходит создание или получение корзины с именем "config" и выполнение определенных операций в соответствии с переданными значениями запроса. Если значение запроса для ключа "defaultHide" не является пустым, то метод вызывает метод b.Put(), чтобы добавить значение в базу данных под ключом "defaultHide". В противном случае, метод вызывает метод b.Delete(), чтобы удалить значение из базы данных под ключом "defaultHide".
 
-		В конце метод возвращает ошибку, если что-то пошло не так во время выполнения операций с базой данных.
-	*/
 }
 
 func (m *Map) setTitle(rw http.ResponseWriter, req *http.Request) {
