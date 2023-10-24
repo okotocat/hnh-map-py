@@ -24,21 +24,33 @@ func (m *Map) admin(rw http.ResponseWriter, req *http.Request) {
 		http.Redirect(rw, req, "/", 302)
 		return
 	}
-
+	// method "admin" for "map" structure
+	// recieves "rw" and "req" parameters
+	// rw for http.ResponseWriter, req for http.Request
+	// checks req for active session
+	// if no session or no AUTH_ADMIN redirects to /
 	users := []string{}
+	// init user, empty user list
 	prefix := ""
+	// init prefix, empty string variable
 	maps := []MapInfo{}
+	// init maps, empty maps list, for MapInfo datatype
 	defaultHide := false
+	// init boolean variable
 	m.db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
 		if b == nil {
 			return nil
 		}
+		// tx method calls for "users" bucket root object
+		// if it is not found, returns nil
 		config := tx.Bucket([]byte("config"))
 		if config != nil {
 			prefix = string(config.Get([]byte("prefix")))
 			defaultHide = config.Get([]byte("defaultHide")) != nil
 		}
+		// calls for "config" bucket root object, if found, then prefix key converts to string, and inits to "prefex" variable
+		// defaultHide converts to bool and compares to nil, result is stored to defaultHide variable
 		mapB := tx.Bucket([]byte("maps"))
 		if mapB != nil {
 			mapB.ForEach(func(k, v []byte) error {
@@ -48,7 +60,9 @@ func (m *Map) admin(rw http.ResponseWriter, req *http.Request) {
 				return nil
 			})
 		}
+		// calls for "maps" bucket root object if not nil cycles for every objects pair key:value, decodes from json, and stores to "maps" list
 		return b.ForEach(func(k, v []byte) error {
+			// cycles trough every user, converts to str, stores to "users" list
 			users = append(users, string(k))
 			return nil
 		})
@@ -148,6 +162,7 @@ func (m *Map) wipe(rw http.ResponseWriter, req *http.Request) {
 		http.Redirect(rw, req, "/", 302)
 		return
 	}
+	// wipe button, wipes all buckets
 	err := m.db.Update(func(tx *bbolt.Tx) error {
 		if tx.Bucket([]byte("grids")) != nil {
 			err := tx.DeleteBucket([]byte("grids"))
@@ -190,6 +205,7 @@ func (m *Map) setPrefix(rw http.ResponseWriter, req *http.Request) {
 		http.Redirect(rw, req, "/", 302)
 		return
 	}
+	// returns / if no auth,
 	m.db.Update(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte("config"))
 		if err != nil {
@@ -199,6 +215,9 @@ func (m *Map) setPrefix(rw http.ResponseWriter, req *http.Request) {
 	})
 	http.Redirect(rw, req, "/admin/", 302)
 }
+
+// this parts setting DB prefix from the http.Request, stores it in db
+// ... why?
 
 func (m *Map) setDefaultHide(rw http.ResponseWriter, req *http.Request) {
 	s := m.getSession(req)
@@ -218,6 +237,11 @@ func (m *Map) setDefaultHide(rw http.ResponseWriter, req *http.Request) {
 		}
 	})
 	http.Redirect(rw, req, "/admin/", 302)
+	/*
+			Внутри транзакции происходит создание или получение корзины с именем "config" и выполнение определенных операций в соответствии с переданными значениями запроса. Если значение запроса для ключа "defaultHide" не является пустым, то метод вызывает метод b.Put(), чтобы добавить значение в базу данных под ключом "defaultHide". В противном случае, метод вызывает метод b.Delete(), чтобы удалить значение из базы данных под ключом "defaultHide".
+
+		В конце метод возвращает ошибку, если что-то пошло не так во время выполнения операций с базой данных.
+	*/
 }
 
 func (m *Map) setTitle(rw http.ResponseWriter, req *http.Request) {
