@@ -43,7 +43,7 @@ func (m *Map) admin(rw http.ResponseWriter, req *http.Request) {
 			return nil
 		}
 		// tx method calls for "users" bucket root object
-		// if it is not found, returns nil
+		// if it is not found, returns nil b stand for users
 		config := tx.Bucket([]byte("config"))
 		if config != nil {
 			prefix = string(config.Get([]byte("prefix")))
@@ -250,17 +250,20 @@ func (m *Map) setTitle(rw http.ResponseWriter, req *http.Request) {
 		http.Redirect(rw, req, "/", 302)
 		return
 	}
+	// settile method
 	m.db.Update(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte("config"))
 		if err != nil {
 			return err
 		}
+		// checks for "config" bucket and create if it not exists
+		// puts (b.put) "title" value from (req.FormValue) into "title" of bucket "config"
 		return b.Put([]byte("title"), []byte(req.FormValue("title")))
 	})
 	http.Redirect(rw, req, "/admin/", 302)
 }
 
-// lj
+// zoomProcessing
 type zoomproc struct {
 	c Coord
 	m int
@@ -272,24 +275,33 @@ func (m *Map) rebuildZooms(rw http.ResponseWriter, req *http.Request) {
 		http.Redirect(rw, req, "/", 302)
 		return
 	}
+	// chekcs for AUTH_ADMIN
 	needProcess := map[zoomproc]struct{}{}
 	saveGrid := map[zoomproc]string{}
-
 	noGrids := false
+	// inits 2 empty dicts, needProcess and saveGrid, key zoomproc, value : struck (and string for grid one)
+
 	m.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte("grids"))
 		if b == nil {
 			noGrids = true
 			return nil
 		}
+		// Get Grids bucket from db, if not found, sets flag noGrids to True
 		b.ForEach(func(k, v []byte) error {
+			// for every item in Grid entry in Grids bucket
+			// creates grid variable with GridData datatype
 			grid := GridData{}
 			json.Unmarshal(v, &grid)
+			// decodes JSON to GridData and puts it in gird variable
 			needProcess[zoomproc{grid.Coord.Parent(), grid.Map}] = struct{}{}
+			// add "zoomproc{grid.Coord.parent}, grid.Map and struct{}" to needProcess dict,
 			saveGrid[zoomproc{grid.Coord, grid.Map}] = grid.ID
+			// add "zoomproc{grid.Coord, grid.Map}" to saveGrid dict
 			return nil
 		})
 		tx.DeleteBucket([]byte("tiles"))
+		// removes bucket tiles;
 		return nil
 	})
 
