@@ -7,12 +7,17 @@ type topic struct {
 	mu sync.Mutex
 }
 
+// sets "topic" structure
+// c = slice of the "*TileData"
+// for acces mutex
 func (t *topic) watch(c chan *TileData) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.c = append(t.c, c)
 }
 
+// method watch add c (dataType "*TileData") to slice t.c
+// sync acces with mutex
 func (t *topic) send(b *TileData) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -27,6 +32,8 @@ func (t *topic) send(b *TileData) {
 	}
 }
 
+// sends b (dataType *TileData) to every channel of slice t.c. ;
+// if channels busy, it closes channel and deletes it from slice
 func (t *topic) close() {
 	for _, c := range t.c {
 		close(c)
@@ -34,11 +41,16 @@ func (t *topic) close() {
 	t.c = t.c[:0]
 }
 
+// closes every channel in slice t.c.
 type Merge struct {
 	From, To int
 	Shift    Coord
 }
 
+// sets From to int
+// sets Shift to datatype Coord
+
+//analog of topic struct
 type mergeTopic struct {
 	c  []chan *Merge
 	mu sync.Mutex
@@ -49,7 +61,6 @@ func (t *mergeTopic) watch(c chan *Merge) {
 	defer t.mu.Unlock()
 	t.c = append(t.c, c)
 }
-
 func (t *mergeTopic) send(b *Merge) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -63,7 +74,6 @@ func (t *mergeTopic) send(b *Merge) {
 		}
 	}
 }
-
 func (t *mergeTopic) close() {
 	for _, c := range t.c {
 		close(c)

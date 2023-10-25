@@ -21,6 +21,8 @@ type TileData struct {
 	Cache int64
 }
 
+// setting TileData datatype
+
 func (m *Map) GetTile(mapid int, c Coord, z int) (td *TileData) {
 	m.db.View(func(tx *bbolt.Tx) error {
 		tiles := tx.Bucket([]byte("tiles"))
